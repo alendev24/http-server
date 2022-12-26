@@ -3,22 +3,21 @@ package main
 import (
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
+	"os"
 )
 
 // Root path function added
 func getRoot(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("Root path requested\n")
-	io.WriteString(w, "Status code 200 (ok)\n")
+	fmt.Fprint(w, "<h1>This is my website</h1>")
 }
 
 // /hello path function added
 func getHello(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf("%s: got/hello request\n")
-	
+
 	fmt.Printf("/hello path requested\n")
-	io.WriteString(w, "Hello, HTTP!\n")
+	fmt.Fprint(w, "<h1>This is my website with /hello path selected</h1>")
 }
 
 // Program main entry point

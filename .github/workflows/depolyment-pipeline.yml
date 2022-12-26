@@ -1,0 +1,107 @@
+# Name of the pipeline
+name: "Deployment pipeline with docker container"
+
+# Events that are triggering the pipeline
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - feature/**
+
+jobs:
+
+  build:
+    runs-on: ubuntu-20.04
+
+    steps:
+
+    - uses: actions/checkout@v2
+
+
+    # Set up GO
+    - name: Install GO 
+      uses: actions/checkout@v2
+      with:
+        go-version: '1.19.2'
+
+    # Install all nessecary dependencies
+    - name: Install dependencies
+      run: |
+        go-version:
+        go get -u golang.org/x/lint/golint
+
+    # Build the application
+    - name: Build GO application
+      run: go build . # Using GO CLI and stating location where to build
+
+    # Run Linter testing
+    - name: Run Lint and vet testing
+      run: |
+        golint .
+        go vet .
+
+    # Perform testing
+    - name: Initiliaze Test
+      run: cd test && go test -v
+
+    # Slack configuration
+    - name: Send Slack notification
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
+
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      if: always()  # Will pick up if job fail or is canceled
+
+      # From here we define deployment workflow
+  deploy: 
+
+    runs-on: ubuntu-20.04
+    needs: [build]
+    if: ${{ github.ref == 'refs/heads/master' && github.event_name == 'push'}}
+
+    steps:
+      - uses: actions/checkout@v2 
+
+
+      # Deploy to DockerHub
+      - name: Deploy to DockerHub
+        uses: docker/build-push-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          repository: repoName/userName
+          tag_with_ref: true
+      #  AWS CLI/credentials setup   
+      - name: Set up AWS CLI and configure credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: us-east1
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}  
+      # AWS EC2 instance retreival
+      - name: Retrieve public IP address of EC2 instance
+        uses: aws-actions/ec2-describe-instances@v1
+        id: describe-instances
+        with:
+          instance-id: < ec2-instance-ID > 
+      # Pulling docker image from DockerHub
+      - name: Set up Docker
+        uses: docker/setup-docker@v1
+      - name: Pull image from Docker Hub
+        run: |
+          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+          docker pull myimage:latest       
+      # Running image on the server
+      - name: Run container with pulled image on EC2 instance
+        uses: aws-actions/ssh-exec@v1
+        with:
+          host: ${{ steps.describe-instances.outputs.public-ip }}
+          username: ec2-user
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+              docker run -d -p 80:80 myimage:latest
