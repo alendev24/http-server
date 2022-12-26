@@ -28,7 +28,7 @@ func main() {
 	// Error handling in specific cases
 	err := http.ListenAndServe("127.0.0.1:3333", nil)
 	if errors.Is(err, http.ErrServerClosed) {
-		fmt.Printf("Server closed succsefully\n")
+		fmt.Printf("Server closed succsefully.\n")
 	} else if err != nil {
 		fmt.Printf("server is not started %s\n", err)
 		fmt.Println("Closing, thank you!")
