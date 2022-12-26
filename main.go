@@ -31,6 +31,7 @@ func main() {
 		fmt.Printf("Server closed succsefully\n")
 	} else if err != nil {
 		fmt.Printf("server is not started %s\n", err)
+		fmt.Println("Closing, thank you!")
 		os.Exit(1)
 	}
 }
