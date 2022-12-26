@@ -2,13 +2,8 @@
 name: "Deployment pipeline with docker container"
 
 # Events that are triggering the pipeline
-on:
-  push:
-    branches:
-      - master
-  pull_request:
-    branches:
-      - feature/**
+on: [push]
+  
 
 jobs:
 
