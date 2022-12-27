@@ -16,9 +16,7 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
-
     - uses: actions/checkout@v2
-
 
     # Set up GO
     - name: Install GO 
@@ -62,11 +60,11 @@ jobs:
 
     runs-on: ubuntu-20.04
     needs: [build]
+    
     if: ${{ github.ref == 'refs/heads/master' && github.event_name == 'push'}}
 
     steps:
       - uses: actions/checkout@v2 
-
 
       # Deploy to DockerHub
       - name: Deploy to DockerHub
